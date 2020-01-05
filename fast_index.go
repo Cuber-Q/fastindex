@@ -1,4 +1,4 @@
-package fastindex
+package main
 
 import (
 	"bytes"
@@ -16,8 +16,7 @@ import (
 // When data file has been fetched into small index files, we will sort index files concurrently.
 // When index files have been handled successfully, map all of them to memory using os.mmap()
 // meanwhile the data file also be mapped into memory using os.mmap(), so that we don't have to
-// care about loading disk page into memory and discarding old memory page when memory is not enough.
-//
+// care about disk page's loading and free.
 
 const fixIndexItemSize = 24
 
@@ -176,10 +175,9 @@ func (fidx *FastIndex) Build(dataPath string, readBufSize int) {
 	}
 
 	// write every indexShard's remain data
-	sortBuf := make([]byte, int(2*size/int64(fidx.shardNum)))
 	for _, idxShard := range fidx.shards {
 		idxShard.writeCompletely()
-		idxShard.sort(&sortBuf)
+		idxShard.sort()
 		idxShard.file.Close()
 	}
 }
@@ -231,7 +229,7 @@ func (idx *IndexShard) writeCompletely() {
 }
 
 // sort sorts small indexShard file, with O(N*logN)
-func (idx *IndexShard) sort(buf *[]byte) {
+func (idx *IndexShard) sort() {
 	//buf = buf[:]
 	fInfo, e := idx.file.Stat()
 	if e != nil {
@@ -239,10 +237,9 @@ func (idx *IndexShard) sort(buf *[]byte) {
 	}
 
 	size := fInfo.Size()
+	buf := make([]byte, size)
 
-	buffer := bytes.NewBuffer([]byte{})
-	buffer.ReadFrom(idx.file)
-	cnt, e := idx.file.ReadAt(*buf, 0)
+	cnt, e := idx.file.ReadAt(buf, 0)
 	if e != nil {
 		fmt.Println("error when read index file, cnt:", cnt, ", e:", e)
 		return
@@ -305,25 +302,25 @@ func convertByteToItem(buf []byte) *indexItem {
 	return item
 }
 
-func (idx *IndexShard) writeBack(buf *[]byte) {
+func (idx *IndexShard) writeBack(buf []byte) {
 	var offset int64 = 0
 	_buf := make([]byte, 8)
 	for _, item := range idx.items {
 		binary.BigEndian.PutUint64(_buf, uint64(item.key))
-		copy(*buf[offset:], _buf)
+		copy(buf[offset:], _buf)
 
 		offset += 8
 		binary.BigEndian.PutUint64(_buf, uint64(item.vsz))
-		copy(*buf[offset:], _buf)
+		copy(buf[offset:], _buf)
 
 		offset += 8
 		binary.BigEndian.PutUint64(_buf, uint64(item.vpos))
-		copy(*buf[offset:], _buf)
+		copy(buf[offset:], _buf)
 
 		offset += 8
 	}
 
-	if n, e := idx.file.WriteAt(*buf, 0); e != nil {
+	if n, e := idx.file.WriteAt(buf, 0); e != nil {
 		fmt.Errorf("writeBack indexShard error:%s, writed n:%d", e, n)
 	}
 }

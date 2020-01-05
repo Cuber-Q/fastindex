@@ -1,9 +1,10 @@
-package fastindex
+package main
 
 import (
 	"fmt"
 	"math/rand"
 	"os"
+	"time"
 )
 
 type DB struct {
@@ -34,7 +35,7 @@ func OpenDB(baseDir string) *DB {
 	db.dataFilePath = db.dataFileDir + "data.d"
 	db.indexFileDir = baseDir + "/index/"
 	db.maxDataSize = 16 * GB
-	db.indexShardNum = 1024
+	db.indexShardNum = 1000
 	db.maxKey = 1 << 30
 	db.maxValueLength = KB
 
@@ -91,17 +92,22 @@ func (db *DB) Find(key int64) string {
 	return v
 }
 
-func (db *DB) FindLoop(cnt int) {
+func (db *DB) FindLoop(loopCnt int) int {
 	vBuf := make([]byte, db.maxValueLength)
-	for i := 0; i < cnt; i++ {
+	totalTime := 0
+	for i := 0; i < loopCnt; i++ {
+		start := time.Now()
+
 		key := rand.Int63n(db.maxKey)
-		vsize, vpos := db.fidx.Find(key)
+		_, vpos := db.fidx.Find(key)
 		n, _ := db.dataFile.ReadAt(vBuf, vpos)
 		if n <= 0 {
 			//fmt.Println("find error at key:", key)
 			continue
 		}
-		v := string(vBuf[:vsize])
-		fmt.Println("key:", key, ", v:", v)
+		end := time.Now()
+		totalTime += int(end.Sub(start))
+		//fmt.Println("key:", key, ", v:", v)
 	}
+	return totalTime / loopCnt
 }

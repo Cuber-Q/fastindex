@@ -1,7 +1,8 @@
-package fastindex
+package main
 
 import (
 	"os"
+	"strconv"
 	"syscall"
 	"unsafe"
 )
@@ -22,4 +23,22 @@ func madvise(b []byte, advice int) (err error) {
 		err = e1
 	}
 	return
+}
+
+func readableTime(time int) string {
+	if time < 1000 {
+		return strconv.Itoa(time) + "ns"
+	} else if time < 1e3 {
+		return strconv.Itoa(time/1e3) + "us"
+	} else if time < 1e6 {
+		return strconv.Itoa(time/1e6) + "ms"
+	} else if time < 1e9 {
+		return strconv.Itoa(time/1e9) + "s"
+	} else if time < 60*1e9 {
+		return strconv.Itoa(time/(1e9*60)) + "min"
+	} else if time < 60*60*1e9 {
+		return strconv.Itoa(time/(1e9*60*60)) + "h"
+	} else {
+		return "a century..."
+	}
 }

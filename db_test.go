@@ -1,4 +1,4 @@
-package fastindex
+package main
 
 import (
 	"fmt"

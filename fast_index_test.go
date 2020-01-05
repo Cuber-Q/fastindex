@@ -1,4 +1,4 @@
-package fastindex
+package main
 
 import (
 	"encoding/binary"
@@ -74,7 +74,7 @@ func oneShard(shard int, key int64) {
 	}
 	idx.writeCompletely()
 	// sort indexShard
-	idx.sort(nil)
+	idx.sort()
 }
 
 func Test_fast_index_build(t *testing.T) {
