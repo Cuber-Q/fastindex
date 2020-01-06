@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"bytes"
@@ -321,7 +321,7 @@ func (idx *IndexShard) writeBack(buf []byte) {
 	}
 
 	if n, e := idx.file.WriteAt(buf, 0); e != nil {
-		fmt.Errorf("writeBack indexShard error:%s, writed n:%d", e, n)
+		fmt.Printf("writeBack indexShard error:%s, writed n:%d", e, n)
 	}
 }
 

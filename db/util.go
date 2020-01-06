@@ -1,8 +1,9 @@
-package main
+package db
 
 import (
 	"os"
 	"strconv"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -25,20 +26,42 @@ func madvise(b []byte, advice int) (err error) {
 	return
 }
 
-func readableTime(time int) string {
+func ReadableTime(time int) string {
 	if time < 1000 {
 		return strconv.Itoa(time) + "ns"
-	} else if time < 1e3 {
-		return strconv.Itoa(time/1e3) + "us"
 	} else if time < 1e6 {
-		return strconv.Itoa(time/1e6) + "ms"
+		return strconv.Itoa(time/1e3) + "us"
 	} else if time < 1e9 {
-		return strconv.Itoa(time/1e9) + "s"
+		return strconv.Itoa(time/1e6) + "ms"
 	} else if time < 60*1e9 {
-		return strconv.Itoa(time/(1e9*60)) + "min"
+		return strconv.Itoa(time/1e9) + "s"
 	} else if time < 60*60*1e9 {
+		return strconv.Itoa(time/(1e9*60)) + "min"
+	} else if time < 24*60*60*1e9 {
 		return strconv.Itoa(time/(1e9*60*60)) + "h"
 	} else {
 		return "a century..."
 	}
+}
+
+func ParseSize(size string) (int64, bool) {
+	if len(size) < 2 {
+		return 0, false
+	}
+
+	_s := size[len(size)-1:]
+	var n int64 = 1
+	if _s == "K" {
+		n = KB
+	} else if _s == "M" {
+		n = MB
+	} else if _s == "G" {
+		n = GB
+	} else if _s == "T" {
+		n = TB
+	}
+
+	sizeArr := strings.Split(size, _s)
+	num, _ := strconv.Atoi(sizeArr[0])
+	return int64(num) * n, true
 }

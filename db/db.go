@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"fmt"
@@ -48,8 +48,9 @@ func OpenDB(baseDir string) *DB {
 }
 
 // create dataFile and indexFiles
-func (db *DB) CreateData() {
+func (db *DB) CreateData(size int64) {
 	// create dataFile
+	db.maxDataSize = size
 	dataGen := &DataFileGen{
 		maxKey:         db.maxKey,
 		maxValueLength: db.maxValueLength,

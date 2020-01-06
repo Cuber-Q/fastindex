@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ const dir = "/Users/Cuber_Q/goproj/fastindex"
 
 func Test_db_create_data(t *testing.T) {
 	db := OpenDB(dir)
-	db.CreateData()
+	db.CreateData(0)
 }
 
 func Test_db_create_index(t *testing.T) {
@@ -26,7 +26,7 @@ func Test_db_find(t *testing.T) {
 	wg.Add(10)
 	for i := 0; i < 10; i++ {
 		go func() {
-			db.FindLoop(10)
+			db.FindLoop(10000)
 			wg.Done()
 		}()
 	}
